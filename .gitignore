@@ -1,0 +1,11 @@
+Library
+Build
+Temp
+MagicWorld/Assets/SSMini
+
+.DS_Store
+*.csproj
+*.pidb
+*.sln
+*.unityproj
+*.userprefs
