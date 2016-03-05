@@ -170,13 +170,13 @@ public class SimpleTransformSync : NetworkBehaviour
         return pack;
     }
 
-	TransformPack NewPack()
-	{
+    TransformPack NewPack()
+    {
         TransformPack pack = new TransformPack();
         pack.t = 0;
         pack.p = Vector3.zero;
         pack.r = Quaternion.identity;
 
         return pack;
-	}
+    }
 }
