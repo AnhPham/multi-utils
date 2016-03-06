@@ -18,7 +18,7 @@ public class Cube : NetworkBehaviour
         else
         {
             animator.SetTrigger("Left");
-		}
+        }
 
         m_TestItem = GameObject.Find("Ball");
     }
