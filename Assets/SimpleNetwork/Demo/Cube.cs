@@ -5,20 +5,13 @@ using System.Collections;
 public class Cube : NetworkBehaviour
 {
     GameObject m_TestItem;
+    Vector3 m_PrevPos;
 
     public override void OnStartLocalPlayer()
     {
         Animator animator = GetComponent<Animator>();
         animator.enabled = true;
-
-        if (isServer)
-        {
-            animator.SetTrigger("Right");
-        }
-        else
-        {
-            animator.SetTrigger("Left");
-        }
+        animator.SetTrigger(isServer ? "Right" : "Left");
 
         m_TestItem = GameObject.Find("Ball");
     }
@@ -34,8 +27,12 @@ public class Cube : NetworkBehaviour
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                GetComponent<SimpleItemCatcher>().Throw(new Vector3(0, 200, -100));
+                Vector3 v = (transform.position - m_PrevPos) / Time.deltaTime;
+
+                GetComponent<SimpleItemCatcher>().Throw(v * 150);
             }
         }
+
+        m_PrevPos = transform.position;
     }
 }

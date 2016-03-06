@@ -31,6 +31,7 @@ public class SimpleItemCatcher : NetworkBehaviour
         if (holding)
         {
             holding = false;
+            m_Item.GetComponent<Rigidbody>().velocity = Vector3.zero;
             m_Item.GetComponent<Rigidbody>().AddForce(force);
             CmdThrow();
         }

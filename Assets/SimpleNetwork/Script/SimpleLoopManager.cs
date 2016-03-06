@@ -8,12 +8,12 @@ public class SimpleLoopManager : MonoBehaviour
     public delegate void OnUpdateStateDelegate();
     public OnUpdateStateDelegate onUpdateState;
 
-    const float cl_updaterate = 20;
+    public const float cl_updaterate = 50;
 
     void Awake()
     {
         instance = this;
-        InvokeRepeating("UpdateState", 0, (1 / cl_updaterate));
+        InvokeRepeating("UpdateState", 0, (1f / cl_updaterate));
     }
 
     void OnDestroy()

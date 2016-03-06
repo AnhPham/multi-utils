@@ -12,16 +12,15 @@ public struct TransformPack
 
 public class SimpleTransformSync : NetworkBehaviour
 {
-    const float cl_interp = 0.1f;
+    const float cl_interp = 0.04f;
     const float cl_extrapolate_amount = 0.25f;
-    const float cl_updaterate = 20;
 
     int m_MaxPack;
     List<TransformPack> m_Packs;
 
     void Awake()
     {
-        m_MaxPack = (int)(cl_interp / (1 / cl_updaterate) + 2);
+        m_MaxPack = (int)(cl_interp / (1f / SimpleLoopManager.cl_updaterate) + 2);
         m_Packs = new List<TransformPack>(m_MaxPack);
     }
 
