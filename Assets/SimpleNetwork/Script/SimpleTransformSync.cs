@@ -21,7 +21,7 @@ public class SimpleTransformSync : NetworkBehaviour
 
     void Awake()
     {
-        m_MaxPack = (int)(cl_interp / (1 / cl_updaterate) + 1);
+        m_MaxPack = (int)(cl_interp / (1 / cl_updaterate) + 2);
         m_Packs = new List<TransformPack>(m_MaxPack);
     }
 
@@ -49,7 +49,7 @@ public class SimpleTransformSync : NetworkBehaviour
 
             if (renTime > 0 && m_Packs.Count == m_MaxPack)
             {
-                TransformPack pack = InterpolatePosition(renTime);
+                TransformPack pack = GetTransformByTime(renTime);
                 transform.position = pack.p;
                 transform.rotation = pack.r;
             }
@@ -89,8 +89,13 @@ public class SimpleTransformSync : NetworkBehaviour
         }
         else
         {
-            pack = m_Packs[0];
-            m_Packs.RemoveAt(0);
+            int index = 0;
+            if (Time.time - m_Packs[m_Packs.Count - 1].t < 0.001f)
+            {
+                index = m_Packs.Count - 1;
+            }
+            pack = m_Packs[index];
+            m_Packs.RemoveAt(index);
         }
 
         pack.t = Time.time;
@@ -100,25 +105,23 @@ public class SimpleTransformSync : NetworkBehaviour
         m_Packs.Add(pack);
     }
 
-    TransformPack InterpolatePosition(float renTime)
+    TransformPack GetTransformByTime(float renTime)
     {
         TransformPack p1 = NewPack();
         TransformPack p2 = NewPack();
 
-        bool hasP1 = false;
-        bool hasP2 = false;
+        bool canInterpolate = false;
 
         for (int i = 0; i < m_Packs.Count; i++)
         {
             if (m_Packs[i].t < renTime)
             {
                 p1 = m_Packs[i];
-                hasP1 = true;
             }
             else if (m_Packs[i].t >= renTime)
             {
                 p2 = m_Packs[i];
-                hasP2 = true;
+                canInterpolate = true;
                 break;
             }
         }
@@ -126,39 +129,25 @@ public class SimpleTransformSync : NetworkBehaviour
         TransformPack pack = NewPack();
         pack.t = renTime;
 
-        if (hasP2)
+        if (canInterpolate)
         {
-            if (hasP1)
-            {
-                float ratio = (renTime - p1.t) / (p2.t - p1.t);
+            float ratio = (renTime - p1.t) / (p2.t - p1.t);
 
-                pack.p = Vector3.Lerp(p1.p, p2.p, ratio);
-                pack.r = Quaternion.Lerp(p1.r, p2.r, ratio);
-            }
-            else
-            {
-                pack.p = p2.p;
-                pack.r = p2.r;
-            }
+            pack.p = Vector3.Lerp(p1.p, p2.p, ratio);
+            pack.r = Quaternion.Lerp(p1.r, p2.r, ratio);
         }
         else
         {
-            if (renTime - m_Packs[m_Packs.Count - 1].t <= cl_extrapolate_amount)
-            {
-                if (m_Packs.Count > 1)
-                {
-                    p1 = m_Packs[m_Packs.Count - 2];
-                    p2 = m_Packs[m_Packs.Count - 1];
+            bool canExtrapolate = (renTime - m_Packs[m_Packs.Count - 1].t <= cl_extrapolate_amount);
 
-                    float ratio = (renTime - p1.t) / (p2.t - p1.t);
-                    pack.p = p1.p + (p2.p - p1.p) * ratio;
-                    pack.r = transform.rotation;
-                }
-                else
-                {
-                    pack.p = m_Packs[0].p;
-                    pack.r = m_Packs[0].r;
-                }
+            if (canExtrapolate)
+            {
+                p1 = m_Packs[m_Packs.Count - 2];
+                p2 = m_Packs[m_Packs.Count - 1];
+
+                float ratio = (renTime - p1.t) / (p2.t - p1.t);
+                pack.p = Vector3.LerpUnclamped(p1.p, p2.p, ratio);
+                pack.r = Quaternion.LerpUnclamped(p1.r, p2.r, ratio);
             }
             else
             {
