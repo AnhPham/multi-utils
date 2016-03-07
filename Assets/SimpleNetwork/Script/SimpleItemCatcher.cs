@@ -15,14 +15,14 @@ public class SimpleItemCatcher : NetworkBehaviour
         set { m_Holding = value; UpdateTransformSync(); }
     }
 
-    public void Hold(GameObject item)
+    public void Hold(GameObject item, GameObject owner = null)
     {
         if (!holding)
         {
             m_Item = item;
             m_ItemId = ItemId(m_Item);
             holding = true;
-            CmdHold(m_ItemId);
+            CmdHold(m_ItemId, (owner == null) ? gameObject : owner);
         }
     }
 
@@ -77,7 +77,7 @@ public class SimpleItemCatcher : NetworkBehaviour
     }
 
     [Command]
-    void CmdHold(uint id)
+    void CmdHold(uint id, GameObject owner)
     {
         m_ItemId = id;
         m_Item = FindItemFromId(id);
@@ -89,7 +89,7 @@ public class SimpleItemCatcher : NetworkBehaviour
         {
             itemId.RemoveClientAuthority(itemId.clientAuthorityOwner);
         }
-        itemId.AssignClientAuthority(connectionToClient);
+        itemId.AssignClientAuthority(owner.GetComponent<NetworkIdentity>().connectionToClient);
     }
 
     [Command]
