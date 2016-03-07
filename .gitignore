@@ -9,3 +9,6 @@ MagicWorld/Assets/SSMini
 *.sln
 *.unityproj
 *.userprefs
+
+Assets.meta
+ProjectSettings.meta
