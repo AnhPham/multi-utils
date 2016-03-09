@@ -12,7 +12,7 @@ public struct TransformPack
 
 public class SimpleTransformSync : NetworkBehaviour
 {
-    const float cl_interp = 0.04f;
+    const float cl_interp = 0.1f;
     const float cl_extrapolate_amount = 0;
 
     int m_MaxPack;
