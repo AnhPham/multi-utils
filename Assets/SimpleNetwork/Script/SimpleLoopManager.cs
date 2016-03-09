@@ -3,6 +3,8 @@ using System.Collections;
 
 public class SimpleLoopManager : MonoBehaviour
 {
+    [SerializeField] bool m_UseFixedUpdate;
+
     public static SimpleLoopManager instance { get; protected set; }
 
     public delegate void OnUpdateStateDelegate();
@@ -13,7 +15,11 @@ public class SimpleLoopManager : MonoBehaviour
     void Awake()
     {
         instance = this;
-        InvokeRepeating("UpdateState", 0, (1f / cl_updaterate));
+
+        if (!m_UseFixedUpdate)
+        {
+            InvokeRepeating("UpdateState", 0, (1f / cl_updaterate));
+        }
     }
 
     void OnDestroy()
@@ -26,6 +32,17 @@ public class SimpleLoopManager : MonoBehaviour
         if (onUpdateState != null)
         {
             onUpdateState();
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (m_UseFixedUpdate)
+        {
+            if (onUpdateState != null)
+            {
+                onUpdateState();
+            }
         }
     }
 }
