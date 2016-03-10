@@ -76,7 +76,7 @@ public class SimpleItemCatcher : NetworkBehaviour
         return null;
     }
 
-    [Command]
+    [Command(channel = Channels.DefaultReliable)]
     void CmdHold(uint id, GameObject owner)
     {
         m_ItemId = id;
@@ -92,7 +92,7 @@ public class SimpleItemCatcher : NetworkBehaviour
         itemId.AssignClientAuthority(owner.GetComponent<NetworkIdentity>().connectionToClient);
     }
 
-    [Command]
+    [Command(channel = Channels.DefaultReliable)]
     void CmdThrow()
     {
         holding = false;

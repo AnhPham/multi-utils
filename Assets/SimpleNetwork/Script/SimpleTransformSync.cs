@@ -70,13 +70,13 @@ public class SimpleTransformSync : NetworkBehaviour
         }
     }
 
-    [Command]
+    [Command(channel = Channels.DefaultUnreliable)]
     void CmdState(Vector3 p, Quaternion r)
     {
         RpcState(p, r);
     }
 
-    [ClientRpc]
+    [ClientRpc(channel = Channels.DefaultUnreliable)]
     void RpcState(Vector3 p, Quaternion r)
     {
         if (!hasAuthority)
