@@ -59,7 +59,14 @@ public class SimpleTransformSync : NetworkBehaviour
     {
         if (hasAuthority)
         {
-            CmdState(transform.position, transform.rotation);
+            if (isServer)
+            {
+                RpcState(transform.position, transform.rotation);
+            }
+            else
+            {
+                CmdState(transform.position, transform.rotation);
+            }
         }
     }
 
