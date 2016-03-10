@@ -10,6 +10,11 @@ public class SimpleLoopManager : MonoBehaviour
 
     public const float cl_updaterate = 20;
 
+    public void Stop()
+    {
+        CancelInvoke();
+    }
+
     void Awake()
     {
         instance = this;
