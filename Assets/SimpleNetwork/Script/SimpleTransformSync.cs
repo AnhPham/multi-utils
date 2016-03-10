@@ -59,8 +59,6 @@ public class SimpleTransformSync : NetworkBehaviour
     {
         if (hasAuthority)
         {
-            Debug.Log(isServer);
-
             if (isServer)
             {
                 RpcState(transform.position, transform.rotation);
