@@ -3,6 +3,8 @@ using System.Collections;
 
 public class SimpleLoopManager : MonoBehaviour
 {
+    [SerializeField] bool m_AutoRun;
+
     public static SimpleLoopManager instance { get; protected set; }
 
     public delegate void OnUpdateStateDelegate();
@@ -36,7 +38,11 @@ public class SimpleLoopManager : MonoBehaviour
     void Awake()
     {
         instance = this;
-        Resume();
+
+        if (m_AutoRun)
+        {
+            Resume();
+        }
     }
 
     void OnDestroy()
