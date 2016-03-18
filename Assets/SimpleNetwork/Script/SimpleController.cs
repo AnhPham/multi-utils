@@ -6,7 +6,12 @@ namespace TeamHoppi.Networking
 {
     public class SimpleController : NetworkBehaviour
     {
-        public virtual void OnProcessInput(KeyCode keyCode)
+        public virtual InputPack[] CreateCustomInputPack(int tick)
+        {
+            return null;
+        }
+
+        public virtual void OnProcessInput(InputPack input)
         {
         }
     }

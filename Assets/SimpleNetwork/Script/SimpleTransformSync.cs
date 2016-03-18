@@ -15,17 +15,92 @@ namespace TeamHoppi.Networking
     public struct InputPack
     {
         public int tick;
-        public int keyCode;
+        public int[] iVals;
+        public float[] fVals;
+
+        public int keyCode
+        {
+            get { return iVals[0]; }
+            set
+            {
+                if (iVals == null)
+                {
+                    iVals = new int[2];
+                }
+
+                iVals[0] = value;
+            }
+        }
+
+        public int mouseButton
+        {
+            get { return iVals[1]; }
+            set
+            {
+                if (iVals == null)
+                {
+                    iVals = new int[2];
+                }
+
+                iVals[1] = value;
+            }
+        }
+
+        public Vector3 position
+        {
+            get { return new Vector3(fVals[0], fVals[1], fVals[2]); }
+            set
+            {
+                if (fVals == null)
+                {
+                    fVals = new float[6];
+                }
+
+                fVals[0] = value.x;
+                fVals[1] = value.y;
+                fVals[2] = value.z;
+            }
+        }
+
+        public Vector3 eulerAngles
+        {
+            get { return new Vector3(fVals[3], fVals[4], fVals[5]); }
+            set
+            {
+                if (fVals == null)
+                {
+                    fVals = new float[6];
+                }
+
+                fVals[3] = value.x;
+                fVals[4] = value.y;
+                fVals[5] = value.z;
+            }
+        }
+    }
+
+    public enum SyncInputType
+    {
+        KEYBOARD_MOUSE,
+        TRANSFORM,
+        CUSTOM
     }
 
     public class SimpleTransformSync : NetworkBehaviour
     {
+        [SerializeField] SyncInputType m_SyncInputType;
+
         int m_Tick;
         int m_MaxPack;
         List<int> m_AllKeyCodes;
         List<TransformPack> m_Packs;
         List<InputPack> m_CurrentInputs;
         SimpleController m_Controller;
+
+        public SyncInputType syncInputType
+        {
+            get { return m_SyncInputType; }
+        }
 
         void Start()
         {
@@ -103,27 +178,88 @@ namespace TeamHoppi.Networking
 
         void ProcessInput(bool pushToList)
         {
+            InputPack[] inputs = null;
+
+            switch (m_SyncInputType)
+            {
+                case SyncInputType.KEYBOARD_MOUSE:
+                    inputs = CreateKeyboardMouseInputPacks(m_Tick);
+                    break;
+
+                case SyncInputType.TRANSFORM:
+                    inputs = CreateTransformInputPacks(m_Tick);
+                    break;
+
+                case SyncInputType.CUSTOM:
+                    inputs = CreateCustomInputPacks(m_Tick);
+                    break;
+            }
+
+            for (int i = 0; i < inputs.Length; i++)
+            {
+                if (pushToList)
+                {
+                    m_CurrentInputs.Add(inputs[i]);
+                }
+
+                if (m_Controller != null)
+                {
+                    m_Controller.OnProcessInput(inputs[i]);
+                }
+            }
+        }
+
+        InputPack[] CreateKeyboardMouseInputPacks(int tick)
+        {
+            List<InputPack> inputs = new List<InputPack>();
+
             for (int i = 0; i < m_AllKeyCodes.Count; i++)
             {
                 int keyCode = m_AllKeyCodes[i];
-
                 if (Input.GetKey((KeyCode)keyCode))
                 {
-                    if (pushToList)
-                    {
-                        InputPack pack = new InputPack();
-                        pack.tick = m_Tick;
-                        pack.keyCode = keyCode;
+                    InputPack input = new InputPack();
+                    input.tick = m_Tick;
+                    input.keyCode = keyCode;
+                    input.mouseButton = -1;
 
-                        m_CurrentInputs.Add(pack);
-                    }
-
-                    if (m_Controller != null)
-                    {
-                        m_Controller.OnProcessInput((KeyCode)keyCode);
-                    }
+                    inputs.Add(input);
                 }
             }
+
+            for (int i = 0; i < 3; i++)
+            {
+                if (Input.GetMouseButton(i))
+                {
+                    InputPack input = new InputPack();
+                    input.tick = m_Tick;
+                    input.keyCode = -1;
+                    input.mouseButton = i;
+
+                    inputs.Add(input);
+                }
+            }
+
+            return inputs.ToArray();
+        }
+
+        InputPack[] CreateTransformInputPacks(int tick)
+        {
+            InputPack[] inputs = new InputPack[1];
+
+            InputPack input = new InputPack();
+            input.tick = m_Tick;
+            input.position = transform.position;
+            input.eulerAngles = transform.eulerAngles;
+
+            inputs[0] = input;
+
+            return inputs;
+        }
+
+        InputPack[] CreateCustomInputPacks(int tick)
+        {
+            return m_Controller.CreateCustomInputPack(tick);
         }
 
         void ClientPushInput()
@@ -144,10 +280,26 @@ namespace TeamHoppi.Networking
 
                 while (m_CurrentInputs.Count > 0 && m_CurrentInputs[0].tick == tick)
                 {
-                    int keyCode = m_CurrentInputs[0].keyCode;
-                    m_CurrentInputs.RemoveAt(0);
+                    InputPack input = m_CurrentInputs[0];
 
-                    ProcessInput(keyCode);
+                    switch (m_SyncInputType)
+                    {
+                        case SyncInputType.KEYBOARD_MOUSE:
+                            ProcessInput(input);
+                            break;
+
+                        case SyncInputType.TRANSFORM:
+                            transform.position = input.position;
+                            transform.eulerAngles = input.eulerAngles;
+                            ProcessInput(input);
+                            break;
+
+                        case SyncInputType.CUSTOM:
+                            ProcessInput(input);
+                            break;
+                    }
+
+                    m_CurrentInputs.RemoveAt(0);
                 }
             }
         }
@@ -280,11 +432,11 @@ namespace TeamHoppi.Networking
         {
         }
 
-        void ProcessInput(int keyCode)
+        void ProcessInput(InputPack input)
         {
             if (m_Controller != null)
             {
-                m_Controller.OnProcessInput((KeyCode)keyCode);
+                m_Controller.OnProcessInput(input);
             }
         }
 

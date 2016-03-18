@@ -5,15 +5,12 @@ using TeamHoppi.Networking;
 
 public class Cube : SimpleController
 {
-    [SerializeField] float m_Speed = 5;
-    [SerializeField] bool m_AutoMove = true;
-
     GameObject m_TestItem;
     Vector3 m_PrevPos;
 
     public override void OnStartLocalPlayer()
     {
-        if (m_AutoMove)
+        if (GetComponent<SimpleTransformSync>().syncInputType == SyncInputType.TRANSFORM)
         {
             Animator animator = GetComponent<Animator>();
             animator.enabled = true;
@@ -23,14 +20,14 @@ public class Cube : SimpleController
         m_TestItem = GameObject.Find("Ball");
     }
 
-    public override void OnProcessInput(KeyCode keyCode)
+    public override void OnProcessInput(InputPack input)
     {
-        if (!m_AutoMove)
+        if (GetComponent<SimpleTransformSync>().syncInputType == SyncInputType.KEYBOARD_MOUSE)
         {
             Vector3 pos = transform.position;
-            float delta = m_Speed * Time.fixedDeltaTime;
+            float delta = 5 * Time.fixedDeltaTime;
 
-            switch (keyCode)
+            switch ((KeyCode)input.keyCode)
             {
                 case KeyCode.LeftArrow:
                     pos.x -= delta;
@@ -43,6 +40,16 @@ public class Cube : SimpleController
                     break;
                 case KeyCode.UpArrow:
                     pos.z += delta;
+                    break;
+            }
+
+            switch (input.mouseButton)
+            {
+                case 0:
+                    pos.y += delta;
+                    break;
+                case 1:
+                    pos.y -= delta;
                     break;
             }
 
