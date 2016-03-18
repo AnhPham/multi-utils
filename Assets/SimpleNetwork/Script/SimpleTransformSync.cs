@@ -12,20 +12,20 @@ public struct TransformPack
 
 public class SimpleTransformSync : NetworkBehaviour
 {
-    const float cl_interp = 0.1f;
-    const float cl_extrapolate_amount = 0;
-
     int m_MaxPack;
     List<TransformPack> m_Packs;
 
-    void Awake()
-    {
-        m_MaxPack = (int)(cl_interp / (1f / SimpleLoopManager.cl_updaterate) + 2);
-        m_Packs = new List<TransformPack>(m_MaxPack);
-    }
-
     void Start()
     {
+        float updateRate = SimpleLoopManager.instance.updateRate;
+        float interpolation = SimpleLoopManager.instance.interpolation;
+
+        if (updateRate != 0)
+        {
+            m_MaxPack = (int)(interpolation / (1f / updateRate) + 2);
+            m_Packs = new List<TransformPack>(m_MaxPack);
+        }
+
         if (SimpleLoopManager.instance != null)
         {
             SimpleLoopManager.instance.onUpdateState += OnUpdateState;
@@ -42,15 +42,18 @@ public class SimpleTransformSync : NetworkBehaviour
 
     void Update()
     {
-        if (!hasAuthority)
+        if (m_Packs != null)
         {
-            float renTime = Time.time - cl_interp;
-
-            if (renTime > 0 && m_Packs.Count == m_MaxPack)
+            if (!hasAuthority)
             {
-                TransformPack pack = GetTransformByTime(renTime);
-                transform.position = pack.p;
-                transform.rotation = pack.r;
+                float renTime = Time.time - SimpleLoopManager.instance.interpolation;
+
+                if (renTime > 0 && m_Packs.Count == m_MaxPack)
+                {
+                    TransformPack pack = GetTransformByTime(renTime);
+                    transform.position = pack.p;
+                    transform.rotation = pack.r;
+                }
             }
         }
     }
@@ -117,12 +120,14 @@ public class SimpleTransformSync : NetworkBehaviour
         TransformPack p2 = NewPack();
 
         bool canInterpolate = false;
+        bool useLastestData = false;
 
         for (int i = 0; i < m_Packs.Count; i++)
         {
             if (m_Packs[i].t < renTime)
             {
                 p1 = m_Packs[i];
+                useLastestData = true;
             }
             else if (m_Packs[i].t >= renTime)
             {
@@ -144,7 +149,7 @@ public class SimpleTransformSync : NetworkBehaviour
         }
         else
         {
-            bool canExtrapolate = (renTime - m_Packs[m_Packs.Count - 1].t <= cl_extrapolate_amount);
+            bool canExtrapolate = (renTime - m_Packs[m_Packs.Count - 1].t <= SimpleLoopManager.instance.extrapolation);
 
             if (canExtrapolate)
             {
@@ -157,8 +162,16 @@ public class SimpleTransformSync : NetworkBehaviour
             }
             else
             {
-                pack.p = transform.position;
-                pack.r = transform.rotation;
+                if (useLastestData)
+                {
+                    pack.p = p1.p;
+                    pack.r = p1.r;
+                }
+                else
+                {
+                    pack.p = transform.position;
+                    pack.r = transform.rotation;
+                }
             }
         }
 
